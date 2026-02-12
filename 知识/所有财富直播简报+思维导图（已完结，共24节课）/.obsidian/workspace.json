@@ -1,0 +1,179 @@
+{
+  "main": {
+    "id": "56efbe96cc5ddc26",
+    "type": "split",
+    "children": [
+      {
+        "id": "6e60bc8fcdbcae8f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "160d92fb67ead122",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "新标签页"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "e1f0aff266756196",
+    "type": "split",
+    "children": [
+      {
+        "id": "9ee4c45aa3dec91b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "de60f52396173bd7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "ac448e824650b882",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "e7555c4028494a1d",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "e11311a4b1383fef",
+    "type": "split",
+    "children": [
+      {
+        "id": "8dc8bde881c8fe9b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7bd15a87647e3b23",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "2024.12.21 「开营」赚钱难，但没那么难。/「开营」赚钱难，但没那么难。_原文.pdf",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "「开营」赚钱难，但没那么难。_原文 的反向链接列表"
+            }
+          },
+          {
+            "id": "23bab7c9dfbea66c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "2024.12.21 「开营」赚钱难，但没那么难。/「开营」赚钱难，但没那么难。_原文.pdf",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "「开营」赚钱难，但没那么难。_原文 的出链列表"
+            }
+          },
+          {
+            "id": "c7906a242dba2d80",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "9381aa67583e2dee",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "2024.12.21 「开营」赚钱难，但没那么难。/「开营」赚钱难，但没那么难。_原文.pdf",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "「开营」赚钱难，但没那么难。_原文 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false
+    }
+  },
+  "active": "160d92fb67ead122",
+  "lastOpenFiles": [
+    "财富课思维导图/6，效率翻10倍省下5年试错成本，成功的人都这么做.png",
+    "财富课思维导图/8，【造富腾挪术】人均20万，普通人抓住一次债务红利就够了.jpg",
+    "财富课思维导图/【思维导图】七、定个稍微大点的目标，试试用三年时间赚个 100 万呢？.pdf",
+    "2025.1.15「一」致富路上，如何分辨哪些专业是幸运儿哪些是弃婴 上篇/「一」致富路上，如何分辨哪些专业是幸运儿哪些是弃婴 上篇_原文.pdf",
+    "财富课思维导图/5，紧急插播， AI时代，真正的造富浪潮开始了.jpg",
+    "财富课思维导图/4，赚钱和投资的康庄大道，至简后只有一条路.jpg",
+    "财富课思维导图/2，随时上手的最小赚钱循环，不谈大趋势.jpg",
+    "2024.12.21 「开营」赚钱难，但没那么难。/「开营」赚钱难，但没那么难。_原文.pdf",
+    "2025.1.19 二、随时上手的最小赚钱循环，不谈大趋势/二、随时上手的最小赚钱循环，不谈大趋势_原文.pdf"
+  ]
+}
