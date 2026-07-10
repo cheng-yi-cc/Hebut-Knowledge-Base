@@ -1,0 +1,62 @@
+C51 COMPILER V9.54   DELAY                                                                 07/03/2022 11:41:46 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DELAY
+OBJECT MODULE PLACED IN .\Objects\delay.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Code\delay.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Code) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\delay.lst) TABS(2) OBJECT(.\Objects\delay.obj)
+
+line level    source
+
+   1          #include<delay.h>
+   2          void delay10ms(void){ 
+   3   1         unsigned char i,j,k;
+   4   1         for(i=5;i>0;i--)
+   5   1            for(j=4;j>0;j--)
+   6   1              for(k=248;k>0;k--);
+   7   1      }
+   8          
+   9          void delayx10ms(unsigned int n){  
+*** WARNING C235 IN LINE 9 OF Code\delay.c: parameter 1: different types
+  10   1        unsigned int i;
+  11   1        for(i = 0;i<n;i++){
+  12   2          delay10ms();
+  13   2        }
+  14   1      }
+  15          
+  16          void Delay(unsigned int xms)    //@11.0592MHz
+  17          {
+  18   1        unsigned char i, j;
+  19   1        while(xms--)
+  20   1        {
+  21   2          _nop_();
+  22   2        i = 2;
+  23   2        j = 199;
+  24   2        do
+  25   2        {
+  26   3          while (--j);
+  27   3        } while (--i);
+  28   2        }
+  29   1        
+  30   1      }
+  31          
+  32          
+  33          //晶振12MHz时，用于18B20延时
+  34          void delay_18B20(unsigned int i)
+  35          {
+  36   1      while(i--);
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     69    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

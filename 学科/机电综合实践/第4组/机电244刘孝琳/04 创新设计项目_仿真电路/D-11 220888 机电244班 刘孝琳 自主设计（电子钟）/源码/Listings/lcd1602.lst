@@ -1,0 +1,151 @@
+C51 COMPILER V9.54   LCD1602                                                               07/03/2022 11:41:46 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\Objects\lcd1602.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Code\lcd1602.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Code) DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\lcd1602.lst) TABS(2) OBJECT(.\Objects\lcd1602.obj)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          #include<delay.h>
+   3          #include<lcd1602.h>
+   4          
+   5          unsigned char code  table_1[]={
+   6          0x03,0x07,0x0f,0x1f,0x1f,0x1f,0x1f,0x1f,
+   7          0x18,0x1E,0x1f,0x1f,0x1f,0x1f,0x1f,0x1f,
+   8          0x07,0x1f,0x1f,0x1f,0x1f,0x1f,0x1f,0x1f,
+   9          0x10,0x18,0x1c,0x1E,0x1E,0x1E,0x1E,0x1E,
+  10          0x0f,0x07,0x03,0x01,0x00,0x00,0x00,0x00,
+  11          0x1f,0x1f,0x1f,0x1f,0x1f,0x0f,0x07,0x01,
+  12          0x1f,0x1f,0x1f,0x1f,0x1f,0x1c,0x18,0x00,
+  13          0x1c,0x18,0x10,0x00,0x00,0x00,0x00,0x00};//心形图的字符模型
+  14          
+  15          
+  16          //检测LCD1602是不是在忙
+  17          void ReadBusy(){
+  18   1        unsigned char state = 0xff; //用于存放读取到的状态
+  19   1        unsigned char i = 0x00 ;   // 计数器
+  20   1        LCD_DATAPINS = 0xFF;  //IO作为输入，先写1
+  21   1        LCD_RS = 0;         
+  22   1        LCD_WR = 1;
+  23   1        do{
+  24   2        LCD_EN = 1;
+  25   2        state = LCD_DATAPINS;
+  26   2        LCD_EN = 0; //为下一次交互准备
+  27   2          i++;
+  28   2          if(i>50){
+  29   3            break;
+  30   3          }
+  31   2        }while(state & 0X80); //使用do while循环
+  32   1        //避免液晶屏损坏，读出结果一直为1
+  33   1      }
+  34          
+  35          //写命令
+  36          void WriteCmd(unsigned char cmd){
+  37   1        ReadBusy();//等待不忙
+  38   1        LCD_RS = 0;
+  39   1        LCD_WR = 0;//写操作
+  40   1        LCD_DATAPINS = cmd;
+  41   1        LCD_EN = 1;
+  42   1        LCD_EN = 0;
+  43   1      }
+  44          
+  45          //写命令
+  46          void WriteData(unsigned char dat){
+  47   1        ReadBusy();//等待不忙
+  48   1        LCD_RS = 1;
+  49   1        LCD_WR = 0;//写操作
+  50   1        LCD_DATAPINS = dat;
+  51   1        LCD_EN = 1;
+  52   1        LCD_EN = 0;
+  53   1      }
+  54          
+C51 COMPILER V9.54   LCD1602                                                               07/03/2022 11:41:46 PAGE 2   
+
+  55          void LcdInit(){
+  56   1        WriteCmd(LCD_MODE_PIN8);//8位数据口，2行，5*8点阵
+  57   1        WriteCmd(LCD_CURSOR_SHOW);//显示光标以及光标设置
+  58   1        WriteCmd(LCD_CURSOR_MOVE);//显示开/关控制
+  59   1        WriteCmd(LCD_SCREEN_CLR);
+  60   1      }
+  61          
+  62          //DDRAM,列从0开始
+  63          void LCD_Show_String(unsigned char x,unsigned char y,unsigned char *p){
+  64   1        if(y == 0){
+  65   2          WriteCmd(0x80|x);
+  66   2        }else{
+  67   2          WriteCmd(0x80|(0x40+x));
+  68   2        }
+  69   1        //写数据
+  70   1        while(*p != '\0'){
+  71   2          WriteData(*p);
+  72   2          p++;
+  73   2        }
+  74   1      }
+  75          
+  76          //一行只能显示16个字符，通过移屏进行显示后面的，em...好像用不到
+  77          
+  78          
+  79          void LCD_CGRAM(void){
+  80   1        unsigned int i=0,j=0,k=0;
+  81   1        unsigned char tmp=0x40;//设置CGRAM地址
+  82   1      for(j=0;j<8;j++)
+  83   1      {
+  84   2        for(i=0;i<8;i++)
+  85   2        {
+  86   3          WriteCmd(tmp+i); // 设置自界说字符的 CGRAM 地址
+  87   3          //delay_nms(2);
+  88   3          WriteData(table_1[k]); // 向CGRAM写入自界说字符表的数据
+  89   3          k++;
+  90   3          //delay_nms(2);等待忙检测
+  91   3        }
+  92   2          tmp=tmp+8;
+  93   2      }
+  94   1      }
+  95          
+  96          
+  97          void LCD_Show_CHAR(unsigned x,unsigned char y,unsigned char dat)
+  98          {
+  99   1        if(y == 0){
+ 100   2          WriteCmd(0x80|x);
+ 101   2        }else{
+ 102   2          WriteCmd(0x80|(0x40+x));
+ 103   2        }
+ 104   1        //写数据
+ 105   1        WriteData(dat);
+ 106   1      }
+ 107          
+ 108          
+ 109          void LCD_Start(){
+ 110   1        unsigned char i;
+ 111   1        for (i=0;i<4;i++)//显现心图画的上半部
+ 112   1        {
+ 113   2          LCD_Show_CHAR(i,0,i);
+ 114   2        }
+ 115   1        for (i=4;i<8;i++)//显现心图画的下半部
+ 116   1        {
+C51 COMPILER V9.54   LCD1602                                                               07/03/2022 11:41:46 PAGE 3   
+
+ 117   2          LCD_Show_CHAR(i-4,1,i);
+ 118   2        }
+ 119   1        LCD_Show_String(8,0,"SDAU MCU");
+ 120   1        LCD_Show_String(8,1,"2022 6 6");
+ 121   1        delayx10ms(300);  //保持3秒
+ 122   1        WriteCmd(0x01);//清屏
+ 123   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    297    ----
+   CONSTANT SIZE    =     82    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

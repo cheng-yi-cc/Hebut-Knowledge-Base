@@ -1,0 +1,73 @@
+C51 COMPILER V9.54   DS18                                                                  07/03/2022 11:41:47 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DS18
+OBJECT MODULE PLACED IN .\Objects\ds18.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Code\ds18.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Code) DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\ds18.lst) TABS(2) OBJECT(.\Objects\ds18.obj)
+
+line level    source
+
+   1          #include <ds18.h>
+   2          #include <delay.h>
+   3          //初始化函数
+   4          bit Init_DS18B20(void)
+   5          {
+   6   1        unsigned char x=0;
+   7   1        DQ = 1;
+   8   1        delay_18B20(8);//延时
+   9   1        DQ = 0;
+  10   1        delay_18B20(80); //应大于 480us
+  11   1        DQ = 1;//拉高总线
+  12   1        delay_18B20(14);
+  13   1        x=DQ;//稍做延时后 如果x=0则初始化成功 x=1则初始化失败
+  14   1        delay_18B20(20);
+  15   1        return(x); 
+  16   1      }
+  17          
+  18          unsigned char ReadOneChar(void)
+  19          {
+  20   1        unsigned char i=0;
+  21   1        unsigned char dat = 0;
+  22   1        for (i=8;i>0;i--)
+  23   1        {
+  24   2          DQ = 0; 
+  25   2          dat>>=1;
+  26   2          DQ = 1; 
+  27   2          if(DQ)
+  28   2            dat|=0x80;
+  29   2          delay_18B20(4);
+  30   2        }
+  31   1        return(dat);
+  32   1      }
+  33          
+  34          void WriteOneChar(unsigned char dat)
+  35          {
+  36   1        unsigned char i=0;
+  37   1        for (i=8; i>0; i--)
+  38   1        {
+  39   2          DQ = 0;
+  40   2          
+  41   2          DQ = dat&0x01; //输出位为零时实现长0短1；输出位为1时短0，短0长1，datasheet
+  42   2          delay_18B20(5);
+  43   2      
+  44   2          DQ = 1;
+  45   2          dat>>=1;
+  46   2        }
+  47   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    130    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.54   DS18                                                                  07/03/2022 11:41:47 PAGE 2   
+
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

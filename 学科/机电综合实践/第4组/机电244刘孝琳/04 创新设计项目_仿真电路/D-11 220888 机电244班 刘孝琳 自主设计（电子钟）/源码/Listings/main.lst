@@ -1,0 +1,449 @@
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\KEIL\C51\BIN\C51.EXE Code\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Code) DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <main.h>
+   2          #include <lcd1602.h>
+   3          #include <delay.h>
+   4          #include <timer0.h>
+   5          #include <ds18.h>
+   6          /*
+   7          SDAU课程设计 
+   8          所选题目:    电子钟设计
+   9          实现功能:    电子时钟的基本功能，显示时、分、秒，用户可以设置时间
+  10                       秒表功能
+  11                       使用DS18B20测量温度
+  12                       LCD1602液晶屏驱动，通过液晶屏实现数据交互
+  13          TIPS:基于普中A2开发板 AT89C52
+  14          DESIGNED BY : 电子2002 PGL 
+  15          */
+  16          
+  17          //定义所需变量
+  18          unsigned char MenuSelect,LastKey,NowKey;
+  19          unsigned char MenuChange= 1;
+  20          unsigned char T0Count = 0;
+  21          unsigned int  T1Count = 0;
+  22          unsigned int  T2Count = 0;
+  23          unsigned char SCount = 0;
+  24          unsigned char KeyNumber = 0;
+  25          unsigned long time_value =0;
+  26          unsigned long time_change_value =0;
+  27          unsigned char str[12];
+  28          unsigned char S_Flag = 0;
+  29          unsigned long second_value =0;
+  30          unsigned char h_m_s=0;
+  31          long temp; //不是无符号数
+  32          int DS_int; 
+  33          unsigned char Dsdata[7] ="_______";
+  34          bit  fg=1;//用于判断温度正负
+  35          
+  36          //读取温度
+  37          int ReadTemperature(void)
+  38          {
+  39   1        unsigned char a=0;//低8位
+  40   1        unsigned char b=0;//高8位
+  41   1        unsigned int  t=0;
+  42   1      
+  43   1        Init_DS18B20();
+  44   1        WriteOneChar(0xCC); // 跳过读序号列号的操作
+  45   1        WriteOneChar(0x44); // 启动温度转换
+  46   1        delay_18B20(100); //至少750ms
+  47   1        Init_DS18B20();
+  48   1        WriteOneChar(0xCC); //跳过读序号列号的操作
+  49   1        WriteOneChar(0xBE); //读取温度寄存器
+  50   1        a=ReadOneChar();
+  51   1        b=ReadOneChar();
+  52   1        if((b&0xf8)==0xf8) //位为1 时温度是负
+  53   1        {
+  54   2          b=~b;
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 2   
+
+  55   2          a=~a+1; //补码转换，取反加一
+  56   2          if(a==0)b++;//如果发生进位
+  57   2          fg=0; //读取温度为负时fg=0
+  58   2        }
+  59   1        else{
+  60   2          fg=1;//正数
+  61   2        }
+  62   1          t=((b*256+a)*25)>>2;//合成整数
+  63   1          return(t);
+  64   1      }
+  65          
+  66          //对读取到的温度数据进行处理
+  67          void Tran(int temp)
+  68          {
+  69   1        unsigned char k=0;  
+  70   1        Dsdata[1] = ' ';Dsdata[2] = '0';Dsdata[3] = '0';Dsdata[4] = '0';Dsdata[5] = '0';//清缓存
+  71   1        if(fg){
+  72   2          Dsdata[0] = ' ';
+  73   2        }
+  74   1        else{
+  75   2          Dsdata[0] = '-';
+  76   2        }
+  77   1        do
+  78   1        {
+  79   2         Dsdata[4-k]=temp%10 + '0';//取最后一位
+  80   2         k++;
+  81   2        }while(temp/=10);
+  82   1          Dsdata[5]=Dsdata[4];Dsdata[4]=Dsdata[3];Dsdata[3]='.';//后移2位数据，加上小数点
+  83   1        Dsdata[6]='\0';//END
+  84   1      }
+  85          
+  86          //按键扫描
+  87          void Scan_Key()
+  88          {
+  89   1        unsigned char KEY_Temp = 0;
+  90   1        if(KEY_1==0){KEY_Temp=1;}
+  91   1        if(KEY_2==0){KEY_Temp=2;}
+  92   1        if(KEY_3==0){KEY_Temp=3;}
+  93   1        if(KEY_4==0){KEY_Temp=4;}
+  94   1        LastKey = NowKey;
+  95   1        NowKey  = KEY_Temp;
+  96   1      }
+  97          
+  98          //根据扫描结果判断有无按键按下，可以实现长按检测
+  99          unsigned char Judge_Key(){
+ 100   1        if(NowKey!= 0 ){
+ 101   2          T2Count++;
+ 102   2        }else if(LastKey!=0 && NowKey==0){//边沿检测
+ 103   2          
+ 104   2            if(T2Count>25){
+ 105   3              KeyNumber=LastKey+4;
+ 106   3            }else{
+ 107   3              KeyNumber=LastKey;
+ 108   3            }
+ 109   2            T2Count=0;
+ 110   2        }
+ 111   1      }
+*** WARNING C173 IN LINE 111 OF Code\main.c: missing return-expression
+ 112          
+ 113          //长整数转换成时间（模60）
+ 114          unsigned char IntergerToTime(long dat,unsigned char*str){
+ 115   1        //中间变量
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 3   
+
+ 116   1        unsigned char i = 0;
+ 117   1        unsigned char h = 0;
+ 118   1        unsigned char m = 0;
+ 119   1        unsigned char s = 0;
+ 120   1        unsigned char buff[11];
+ 121   1          h = dat/ 3600;
+ 122   1          m = dat% 3600 / 60;
+ 123   1          s = dat% 60;
+ 124   1        
+ 125   1          buff[i]=s%10 + '0';
+ 126   1          i++;
+ 127   1          buff[i]=s/10 + '0';
+ 128   1          i++;
+ 129   1        
+ 130   1          buff[i]=m%10 + '0';
+ 131   1          i++;
+ 132   1          buff[i]=m/10 + '0';
+ 133   1          i++;
+ 134   1        
+ 135   1          buff[i]=h%10 + '0';
+ 136   1          i++;
+ 137   1          buff[i]=h/10 + '0';
+ 138   1          i++;
+ 139   1          
+ 140   1        while(i-- > 0){
+ 141   2          *str = buff[i];
+ 142   2          str++;
+ 143   2        }
+ 144   1        *str='\0';//取内容
+ 145   1        
+ 146   1        return 1;
+ 147   1      }
+ 148          
+ 149          //秒表计数值转换
+ 150          unsigned char MsecondToTime(long dat,unsigned char*str){
+ 151   1        //中间变量
+ 152   1        unsigned char i = 0;
+ 153   1        unsigned char h = 0;
+ 154   1        unsigned char m = 0;
+ 155   1        unsigned char s = 0;
+ 156   1        unsigned char buff[11];
+ 157   1          h = dat/ 6000;
+ 158   1          m = (dat-h*6000)/100;
+ 159   1          s = dat-h*6000-m*100;
+ 160   1        
+ 161   1          buff[i]=s%10 + '0';
+ 162   1          i++;
+ 163   1          buff[i]=s/10 + '0';
+ 164   1          i++;
+ 165   1        
+ 166   1          buff[i]=m%10 + '0';
+ 167   1          i++;
+ 168   1          buff[i]=m/10 + '0';
+ 169   1          i++;
+ 170   1        
+ 171   1          buff[i]=h%10 + '0';
+ 172   1          i++;
+ 173   1          buff[i]=h/10 + '0';
+ 174   1          i++;
+ 175   1          
+ 176   1        while(i-- > 0){
+ 177   2          *str = buff[i];
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 4   
+
+ 178   2          str++;
+ 179   2        }
+ 180   1        *str='\0';//取内容
+ 181   1        
+ 182   1        return 1;
+ 183   1      }
+ 184          
+ 185          //主菜单
+ 186          void Main_menu(){
+ 187   1        LCD_Show_String(0,0,"Time:");
+ 188   1        LCD_Show_CHAR(6,0,str[0]);
+ 189   1        LCD_Show_CHAR(7,0,str[1]);
+ 190   1        LCD_Show_CHAR(8,0,':');
+ 191   1        LCD_Show_CHAR(9,0,str[2]);
+ 192   1        LCD_Show_CHAR(10,0,str[3]);
+ 193   1        LCD_Show_CHAR(11,0,':');
+ 194   1        LCD_Show_CHAR(12,0,str[4]);
+ 195   1        LCD_Show_CHAR(13,0,str[5]);
+ 196   1        LCD_Show_String(0,1,"Temp:");//温度
+ 197   1        Tran(DS_int);
+ 198   1        LCD_Show_String(5,1,Dsdata);
+ 199   1        //LCD_Show_CHAR(7,1, '0');
+ 200   1      }
+ 201          
+ 202          //秒表菜单
+ 203          void Second_menu(){
+ 204   1        LCD_Show_String(0,0,"Stopwatch:");
+ 205   1        LCD_Show_CHAR(6,1,str[0]);
+ 206   1        LCD_Show_CHAR(7,1,str[1]);
+ 207   1        LCD_Show_CHAR(8,1,':');
+ 208   1        LCD_Show_CHAR(9,1,str[2]);
+ 209   1        LCD_Show_CHAR(10,1,str[3]);
+ 210   1        LCD_Show_CHAR(11,1,':');
+ 211   1        LCD_Show_CHAR(12,1,str[4]);
+ 212   1        LCD_Show_CHAR(13,1,str[5]);
+ 213   1      }
+ 214          
+ 215          //时间调整菜单
+ 216          void Change_menu(){
+ 217   1        LCD_Show_String(0,0,"Change Time");
+ 218   1        if(h_m_s == 0){
+ 219   2          LCD_Show_CHAR(0,1,'H');
+ 220   2        }else if(h_m_s == 1){
+ 221   2          LCD_Show_CHAR(0,1,'M');
+ 222   2        }else if(h_m_s == 2){
+ 223   2          LCD_Show_CHAR(0,1,'S');
+ 224   2        }
+ 225   1        LCD_Show_CHAR(6,1,str[0]);
+ 226   1        LCD_Show_CHAR(7,1,str[1]);
+ 227   1        LCD_Show_CHAR(8,1,':');
+ 228   1        LCD_Show_CHAR(9,1,str[2]);
+ 229   1        LCD_Show_CHAR(10,1,str[3]);
+ 230   1        LCD_Show_CHAR(11,1,':');
+ 231   1        LCD_Show_CHAR(12,1,str[4]);
+ 232   1        LCD_Show_CHAR(13,1,str[5]);
+ 233   1      }
+ 234          
+ 235          
+ 236          void main(){
+ 237   1        delayx10ms(1);
+ 238   1        LcdInit();
+ 239   1        LCD_CGRAM();
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 5   
+
+ 240   1        LCD_Start();
+ 241   1        Timer0_Init();
+ 242   1        //循环
+ 243   1        while(1){
+ 244   2          if(KeyNumber){
+ 245   3            if(KeyNumber == 1){
+ 246   4              if(MenuSelect == 1){
+ 247   5                if(S_Flag == 1){
+ 248   6                  S_Flag = 0;
+ 249   6                }else{
+ 250   6                  S_Flag = 1;
+ 251   6                }
+ 252   5              }
+ 253   4              if(MenuSelect==2){
+ 254   5                switch(h_m_s){
+ 255   6                  case 0 : 
+ 256   6      
+ 257   6                    temp = time_change_value + 60*60;
+ 258   6                    if(temp<86400-1){
+ 259   7                      time_change_value = temp;
+ 260   7                    }break;
+ 261   6                  case 1 : 
+ 262   6      
+ 263   6                    temp = time_change_value + 60;
+ 264   6                    if(temp<86400-1){
+ 265   7                      time_change_value = temp;
+ 266   7                    }break;
+ 267   6                  case 2 : 
+ 268   6      
+ 269   6                    temp = time_change_value + 1;
+ 270   6                    if(temp<86400-1){
+ 271   7                      time_change_value = temp;
+ 272   7                    }break;
+ 273   6                }
+ 274   5              }
+ 275   4            }else if(KeyNumber == 2){
+ 276   4              if(MenuSelect==2){
+ 277   5                switch(h_m_s){
+ 278   6                  case 0 : 
+ 279   6      
+ 280   6                    temp = time_change_value - 60*60;
+ 281   6                    if(temp>=0){
+ 282   7                      time_change_value = temp;
+ 283   7                    }break;
+ 284   6                  case 1 : 
+ 285   6      
+ 286   6                    temp = time_change_value - 60;
+ 287   6                    if(temp>=0){
+ 288   7                      time_change_value = temp;
+ 289   7                    }break;
+ 290   6                  case 2 : 
+ 291   6      
+ 292   6                    temp = time_change_value - 1;
+ 293   6                    if(temp>=0){
+ 294   7                      time_change_value = temp;
+ 295   7                    }break;
+ 296   6                }
+ 297   5              }
+ 298   4            }
+ 299   3            else if(KeyNumber == 3){//3键切换菜单
+ 300   4                if(MenuSelect<2){
+ 301   5                    MenuSelect++;
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 6   
+
+ 302   5                    MenuChange=1;
+ 303   5                    if(MenuSelect>1){
+ 304   6                      MenuSelect=0;
+ 305   6                    }
+ 306   5                }else if(MenuSelect==2){
+ 307   5                    h_m_s++;
+ 308   5                    if(h_m_s>=3){
+ 309   6                      h_m_s=0;
+ 310   6                    }
+ 311   5                }
+ 312   4            }else if(KeyNumber == 5){
+ 313   4                  if(MenuSelect == 1){
+ 314   5                    //清零计数值
+ 315   5                    second_value=0;
+ 316   5                  }
+ 317   4                  //LED_2 = ~LED_2;
+ 318   4            }else if(KeyNumber == 6){
+ 319   4                  if(MenuSelect == 2){
+ 320   5                    //确定校时
+ 321   5                    time_value=time_change_value;
+ 322   5                    //--
+ 323   5                    LED_2 = ~LED_2;//LED闪烁表示 效时成功了哦
+ 324   5                    //--
+ 325   5                  }
+ 326   4            }else if(KeyNumber == 7){
+ 327   4                if(MenuSelect != 2){
+ 328   5                  MenuChange=1;
+ 329   5                  //time_change_value=time_value;
+ 330   5                  time_change_value=0;
+ 331   5                  MenuSelect=2;
+ 332   5                }else{
+ 333   5                  MenuChange=1;
+ 334   5                  MenuSelect=0;
+ 335   5                }
+ 336   4            }
+ 337   3            
+ 338   3      
+ 339   3            KeyNumber=0;
+ 340   3          }
+ 341   2          //清屏命令，防止重复清屏，卡哎
+ 342   2          if(MenuChange==1){
+ 343   3            WriteCmd(0x01);//清屏
+ 344   3            MenuChange = 0;
+ 345   3          }
+ 346   2          //切换菜单
+ 347   2          switch(MenuSelect){
+ 348   3            case 0 :  IntergerToTime(time_value,str);Main_menu();break;
+ 349   3            case 1 :  MsecondToTime(second_value,str);Second_menu();break;
+ 350   3            case 2 :  IntergerToTime(time_change_value,str);Change_menu();
+ 351   3                      if(h_m_s==0){
+ 352   4                        Delay(260);
+ 353   4                        LCD_Show_CHAR(6,1,' ');
+ 354   4                        LCD_Show_CHAR(7,1,' ');
+ 355   4                        Delay(260);
+ 356   4                      }else if(h_m_s==1){
+ 357   4                        Delay(260);
+ 358   4                        LCD_Show_CHAR(9,1,' ');
+ 359   4                        LCD_Show_CHAR(10,1,' ');
+ 360   4                        Delay(260);
+ 361   4                      }else if(h_m_s==2){
+ 362   4                        Delay(260);
+ 363   4                        LCD_Show_CHAR(12,1,' ');
+C51 COMPILER V9.54   MAIN                                                                  07/03/2022 11:41:46 PAGE 7   
+
+ 364   4                        LCD_Show_CHAR(13,1,' ');
+ 365   4                        Delay(260);
+ 366   4                      }break;
+ 367   3            }
+ 368   2      
+ 369   2        }
+ 370   1        
+ 371   1      }
+ 372          
+ 373          //计数器0用于按键扫描（不要加delay延时！）同时实现计数
+ 374          void Timer0_interrupt() interrupt 1
+ 375          {
+ 376   1        TL0 = 0x18;   
+ 377   1        TH0 = 0xFC;   
+ 378   1        T0Count++;T1Count++;
+ 379   1        if(T0Count>=20)         //每20ms扫描一次按键
+ 380   1        {
+ 381   2          T0Count=0;
+ 382   2          SCount++;
+ 383   2          Scan_Key();
+ 384   2          Judge_Key();
+ 385   2        }
+ 386   1        if(T1Count>=10){
+ 387   2          T1Count=0;
+ 388   2          if(S_Flag==1){
+ 389   3            if(second_value<60001){
+ 390   4              second_value++;
+ 391   4            }else{
+ 392   4              second_value=0;
+ 393   4            }
+ 394   3          }
+ 395   2        }
+ 396   1        if(SCount >= 50 ){
+ 397   2          SCount=0;
+ 398   2          if(time_value >86400-1){
+ 399   3                time_value=0;
+ 400   3            }else{
+ 401   3                time_value++;
+ 402   3              //---
+ 403   3                DS_int = ReadTemperature();//读取温度
+ 404   3      
+ 405   3              //---
+ 406   3            }
+ 407   2      
+ 408   2        }
+ 409   1      }
+ 410          
+ 411          
+*** WARNING C290 IN LINE 111 OF Code\main.c: missing return value
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2111    ----
+   CONSTANT SIZE    =     35    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     50      45
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)
